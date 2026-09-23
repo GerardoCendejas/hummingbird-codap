@@ -1,0 +1,162 @@
+/* Hummingbird detective: palette taken from Anna's hummingbird
+   (emerald back, rose throat) against a pale sky. */
+:root {
+  --sky: #eaf4f4;
+  --paper: #ffffff;
+  --ink: #1d2f3a;
+  --ink-soft: #4a5d68;
+  --emerald: #1e7a5e;
+  --emerald-light: #7cc4a8;
+  --rose: #c7336b;
+  --rose-soft: #fbe6ee;
+  --line: #cfe0df;
+  --font-display: "Baloo 2", "Nunito", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-body: "Nunito", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; background: var(--sky); min-height: 100%; }
+
+body {
+  background: var(--sky);
+  color: var(--ink);
+  font: 16px/1.5 var(--font-body);
+}
+
+main { padding: 16px 16px 28px; max-width: 520px; margin: 0 auto; }
+
+h1, h2 { font-family: var(--font-display); margin: 0; line-height: 1.15; }
+h1 { font-size: 1.75rem; font-weight: 700; color: var(--emerald); }
+h2 { font-size: 1.125rem; font-weight: 700; }
+p { margin: 0; }
+
+/* Header */
+.intro { margin-top: 6px; color: var(--ink-soft); }
+
+.beak-key {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  background: var(--paper);
+  border-radius: 14px;
+}
+.beak { margin: 0; flex: 1; text-align: center; }
+.beak svg { width: 100%; max-width: 130px; height: auto; display: block; margin: 0 auto; }
+.beak figcaption { font-size: 0.875rem; font-weight: 700; color: var(--ink-soft); }
+
+/* Progress */
+.progress { margin: 18px 0 10px; }
+.bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--rose); border-radius: 99px; transition: width 400ms ease; }
+.progress p { font-size: 0.875rem; color: var(--ink-soft); margin-top: 4px; }
+
+/* Steps: a vertical trail the hummingbird flies along */
+.steps { list-style: none; margin: 0; padding: 0; position: relative; }
+.steps::before {
+  content: "";
+  position: absolute;
+  left: 17px; top: 18px; bottom: 18px;
+  border-left: 3px dotted var(--line);
+}
+
+.step { display: flex; gap: 12px; padding: 8px 0; position: relative; }
+
+.marker {
+  flex: none;
+  width: 37px; height: 37px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--sky);
+  border: 3px solid var(--line);
+  color: var(--ink-soft);
+  font: 700 0.95rem var(--font-display);
+  position: relative;
+}
+.marker svg { width: 22px; height: 22px; }
+
+.step.done .marker { background: var(--emerald); border-color: var(--emerald); }
+.step.done h2 { color: var(--ink-soft); }
+
+.step.current .marker {
+  width: 44px; height: 44px; margin-left: -3.5px;
+  background: var(--paper); border-color: var(--rose);
+  animation: arrive 500ms ease-out;
+}
+.step.current .marker svg { width: 34px; height: 34px; }
+
+.step-main { flex: 1; min-width: 0; padding-top: 6px; }
+.step.current .step-main {
+  background: var(--paper);
+  border-radius: 16px;
+  padding: 12px 14px 14px;
+  box-shadow: 0 2px 0 var(--line);
+}
+.step.current h2 { color: var(--ink); font-size: 1.25rem; }
+
+.step-body { margin-top: 6px; }
+.step-body > * + * { margin-top: 10px; }
+.step-note { margin-top: 2px; font-size: 0.9375rem; color: var(--ink-soft); }
+.step-note p + p { margin-top: 4px; }
+
+.hint {
+  background: var(--rose-soft);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-weight: 700;
+}
+
+/* Choice buttons */
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice {
+  font: 700 1rem var(--font-body);
+  color: var(--ink);
+  background: var(--sky);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.choice:hover { border-color: var(--emerald); }
+.choice.picked { border-color: var(--rose); background: var(--rose-soft); }
+button:focus-visible { outline: 3px solid var(--rose); outline-offset: 2px; }
+
+.preview-btn {
+  font: 0.8125rem var(--font-body);
+  background: none; border: 1px dashed var(--ink-soft); border-radius: 8px;
+  padding: 4px 8px; color: var(--ink-soft); cursor: pointer;
+}
+
+/* Finish */
+.finish {
+  margin: 10px 0 8px 49px;
+  padding: 14px;
+  background: var(--emerald);
+  color: #fff;
+  border-radius: 16px;
+}
+.finish h2 { font-size: 1.375rem; margin-bottom: 4px; }
+
+.step.bonus h2 { color: var(--emerald); }
+
+.notice {
+  margin-top: 18px; padding: 12px;
+  background: var(--paper); border-radius: 12px; font-weight: 700;
+}
+
+.debug {
+  margin-top: 16px; padding: 10px;
+  background: var(--paper); border-radius: 8px;
+  font-size: 0.75rem; overflow-x: auto;
+}
+
+@keyframes arrive {
+  from { transform: translateY(-14px) scale(0.8); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step.current .marker { animation: none; }
+  .bar span { transition: none; }
+}
