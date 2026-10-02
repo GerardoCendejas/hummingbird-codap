@@ -35,6 +35,7 @@
 
   const state = {
     started: false,
+    mission: 1,       // the mission page being shown
     done: new Set(),
     open: new Set(),  // done steps the student expanded to reread
     answers: {},    // step id -> last choice clicked
@@ -129,9 +130,10 @@
     checking = true;
     try {
       const found = await readCodap();
+      const same = JSON.stringify(found) === JSON.stringify(state.detected);
       state.detected = found;
       state.swapped = found.swapped && !found.xaxis;
-      applyDetected(found);
+      applyDetected(found, same);
     } finally {
       checking = false;
       scheduleCheck(1200);   // steady polling as a safety net
@@ -140,14 +142,19 @@
 
   /* ---------- Progress logic ---------- */
 
-  // The current step is the first main step not done; after that, the bonus.
+  // The current step is the first step of this mission page not done yet.
   function currentStep() {
-    return STEPS.find(s => !state.done.has(s.id)) || null;
+    return STEPS.find(s => s.mission === state.mission && !state.done.has(s.id)) || null;
   }
+
+  const missionSteps = n => STEPS.filter(s => s.mission === n);
+  const missionDone = n => missionSteps(n).every(s => s.bonus || state.done.has(s.id));
+  const LAST_MISSION = STEPS[STEPS.length - 1].mission;
 
   // Steps complete in order: an auto step only counts once it is reached,
   // and once done it stays done (less frustrating for kids).
-  function applyDetected(found) {
+  // Only redraw when something changed: redrawing reloads the video and restarts animations.
+  function applyDetected(found, same) {
     let changed = false;
     let step = currentStep();
     while (step && step.kind === "auto" && found[step.id]) {
@@ -155,7 +162,7 @@
       changed = true;
       step = currentStep();
     }
-    render(changed);
+    if (state.started && (changed || !same)) render(changed);
   }
 
   // A finished auto step in the current mission that CODAP no longer shows
@@ -303,20 +310,14 @@
         el("span", { style: `width:${(mainDone / MAIN.length) * 100}%` })),
       el("p", {}, L.progress(mainDone, MAIN.length))));
 
+    app.append(el("h2", { class: "mission" }, L.missions[state.mission]));
+
     const list = el("ol", { class: "steps" });
-    let mission = null;
-    STEPS.forEach((step, i) => {
+    missionSteps(state.mission).forEach((step, i) => {
       const isDone = state.done.has(step.id);
       const isCurrent = current && current.id === step.id;
       // Hide the bonus until the main activity is finished.
       if (step.bonus && mainDone < MAIN.length) return;
-      // Hide missions that haven't started yet.
-      if (current && step.mission > current.mission) return;
-
-      if (step.mission !== mission) {
-        mission = step.mission;
-        list.append(el("li", { class: "mission" }, el("h2", {}, L.missions[mission])));
-      }
 
       const marker = el("span", { class: "marker" });
       if (isCurrent) marker.append(svg(BIRD));
@@ -353,6 +354,17 @@
       }
     });
     app.append(list);
+
+    if (state.mission < LAST_MISSION && missionDone(state.mission)) {
+      const done = L.missionDone[state.mission];
+      app.append(el("section", { class: "finish" },
+        el("h2", {}, done.title),
+        el("p", {}, done.body),
+        el("button", { type: "button", class: "start-btn",
+          onclick: () => { state.mission++; render(false); window.scrollTo(0, 0); } },
+          L.nextMission(state.mission + 1))));
+      if (announce) app.lastChild.scrollIntoView({ block: "nearest" });
+    }
 
     if (DEBUG) {
       app.append(el("pre", { class: "debug" },

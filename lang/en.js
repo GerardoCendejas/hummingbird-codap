@@ -23,7 +23,7 @@ window.ACTIVITY_LANG = {
     title: "Meet Anna's hummingbird",
     paragraphs: [
       "Anna's hummingbird is a tiny bird that lives in California. It weighs less than a nickel! The males have a shiny pink head.",
-      "Lots of people hang sugar-water feeders in their yards. Scientists wondered: did all those feeders change the hummingbirds' beaks?",
+      "Lots of people hang sugar-water feeders in their yards. Hummingbirds poke their beaks into the feeders to drink the sweet sugar-water. Scientists wondered: did all those feeders change the hummingbirds' beaks?",
       "To find out, they measured the beaks of hummingbirds kept in museums. Some birds are more than 100 years old!",
       "Now it's your turn. Be a data detective and look at the same data the scientists used."
     ],
@@ -38,6 +38,12 @@ window.ACTIVITY_LANG = {
   },
 
   broken: "Oops, this changed! Do this step again to keep going.",
+
+  missionDone: {
+    1: { title: "Mission 1 complete!", body: "You can make a graph, sort the birds, and let CODAP count. Now let's find out what happened to the feeders." },
+    2: { title: "Mission 2 complete!", body: "Feeders went up over the years. Now for the big question: did the beaks change too?" }
+  },
+  nextMission: n => `Go to mission ${n}`,
 
   progress: (done, total) => `${done} of ${total} steps done`,
 

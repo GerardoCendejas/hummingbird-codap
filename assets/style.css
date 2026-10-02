@@ -173,9 +173,10 @@ button:focus-visible { outline: 3px solid var(--rose); outline-offset: 2px; }
 }
 .start-btn:hover { filter: brightness(1.08); }
 
-/* Mission headings along the trail */
-.mission { padding: 14px 0 4px 49px; }
-.mission h2 { color: var(--emerald); font-size: 1.0625rem; }
+/* Mission page heading */
+.mission { color: var(--emerald); font-size: 1.375rem; margin-bottom: 6px; }
+section.finish { margin: 14px 0 0; }
+section.finish .start-btn { margin-top: 12px; background: var(--paper); color: var(--emerald); }
 
 /* Finished steps can be reopened */
 details > summary { cursor: pointer; list-style: none; }
