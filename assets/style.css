@@ -160,3 +160,29 @@ button:focus-visible { outline: 3px solid var(--rose); outline-offset: 2px; }
   .step.current .marker { animation: none; }
   .bar span { transition: none; }
 }
+
+/* Intro story */
+.story { margin-top: 14px; padding: 14px; background: var(--paper); border-radius: 16px; }
+.story > * + * { margin-top: 10px; }
+.embed iframe { display: block; width: 100%; height: auto; aspect-ratio: 640 / 552; border: 0; border-radius: 10px; }
+.start-btn {
+  display: block; width: 100%;
+  font: 700 1.125rem var(--font-display);
+  color: #fff; background: var(--rose);
+  border: 0; border-radius: 12px; padding: 10px 14px; cursor: pointer;
+}
+.start-btn:hover { filter: brightness(1.08); }
+
+/* Mission headings along the trail */
+.mission { padding: 14px 0 4px 49px; }
+.mission h2 { color: var(--emerald); font-size: 1.0625rem; }
+
+/* Finished steps can be reopened */
+details > summary { cursor: pointer; list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary h2 { display: inline; }
+details > summary::after { content: " ▾"; color: var(--ink-soft); }
+details[open] > summary::after { content: " ▴"; }
+details > * + * { margin-top: 6px; }
+.reread { font-size: 0.9375rem; }
+.step.broken .marker { background: var(--rose); border-color: var(--rose); }

@@ -7,7 +7,9 @@ window.ACTIVITY_LANG = {
   // Column names exactly as they appear in this language's CSV header.
   attributes: {
     feeders: "feeder abundance",
-    beak: "beak pointiness"
+    beak: "beak pointiness",
+    sex: "male or female",
+    year: "year"
   },
 
   frameTitle: "Hummingbird detective",
@@ -16,19 +18,86 @@ window.ACTIVITY_LANG = {
   beakBlunt: "less pointy",
   beakPointy: "more pointy",
 
+  // Intro screen shown before the missions start.
+  story: {
+    title: "Meet Anna's hummingbird",
+    paragraphs: [
+      "Anna's hummingbird is a tiny bird that lives in California. It weighs less than a nickel! The males have a shiny pink head.",
+      "Lots of people hang sugar-water feeders in their yards. Scientists wondered: did all those feeders change the hummingbirds' beaks?",
+      "To find out, they measured the beaks of hummingbirds kept in museums. Some birds are more than 100 years old!",
+      "Now it's your turn. Be a data detective and look at the same data the scientists used."
+    ],
+    videoTitle: "Anna's hummingbird (Macaulay Library)",
+    start: "Start mission"
+  },
+
+  missions: {
+    1: "Mission 1: Explore the data",
+    2: "Mission 2: Follow the feeders",
+    3: "Mission 3: Feeders and beaks"
+  },
+
+  broken: "Oops, this changed! Do this step again to keep going.",
+
   progress: (done, total) => `${done} of ${total} steps done`,
 
   steps: {
+    graph: {
+      title: "Make a graph",
+      body: "Each row in the table is one hummingbird. Click the Graph button in the toolbar at the top of CODAP.",
+      done: "You made a graph. Each dot is one hummingbird."
+    },
+    sexaxis: {
+      title: "Sort the birds",
+      body: "In the table, find the column “male or female”. Drag its name to the bottom edge of the graph.",
+      done: "The birds are sorted into two groups."
+    },
+    dot: {
+      title: "What is a dot?",
+      body: "Look at the graph. What does one dot stand for?",
+      choices: { bird: "One hummingbird", feeder: "One feeder", county: "One county" },
+      correct: "Right! Every dot is a real hummingbird from a museum.",
+      wrong: "Not quite. Click a dot and see which row lights up in the table."
+    },
+    showcount: {
+      title: "Let CODAP count",
+      body: "Click the graph. Then click the ruler button on its right side and check the box “Count”.",
+      done: "Now each group shows how many birds it has."
+    },
+    count: {
+      title: "Read the numbers",
+      body: "Look at the numbers on the graph. Which group has more birds?",
+      choices: { male: "Males", female: "Females", same: "About the same" },
+      correct: "Yes! The museums have more males than females.",
+      wrong: "Look again: which group has the bigger number?"
+    },
+    yearaxis: {
+      title: "Time on the bottom",
+      body: "Drag “year” to the bottom edge of the graph. It will replace “male or female”.",
+      done: "Old birds are on the left, new birds on the right."
+    },
+    feedaxis: {
+      title: "Feeders on the side",
+      body: "Now drag “feeder abundance” to the left edge of the graph. Higher means more feeders where the bird lived.",
+      done: "Now you can see feeders over time."
+    },
+    yearline: {
+      title: "Add a trend line",
+      body: "Click the ruler button again and check “Least Squares Line”. The line shows the overall pattern of all the dots.",
+      done: "The trend line is on."
+    },
+    trend: {
+      title: "What happened to feeders?",
+      body: "Follow the line from the oldest birds (left) to the newest birds (right). What happened to the number of feeders?",
+      choices: { up: "More feeders", down: "Fewer feeders", flat: "No change" },
+      correct: "Yes! Over 100 years, people put out more and more feeders.",
+      wrong: "Look again: are the dots on the right higher or lower than the dots on the left?"
+    },
     predict: {
       title: "Make a prediction",
       body: "Where there are lots of feeders, what do you think the beaks look like?",
       choices: { pointy: "More pointy", blunt: "Less pointy", same: "No difference" },
       done: "Prediction saved. Let's find out!"
-    },
-    graph: {
-      title: "Make a graph",
-      body: "Click the Graph button in the toolbar at the top of CODAP.",
-      done: "You made a graph."
     },
     xaxis: {
       title: "Put feeders on the bottom",
@@ -43,7 +112,7 @@ window.ACTIVITY_LANG = {
     },
     line: {
       title: "Add a trend line",
-      body: "Click the ruler button next to the graph and turn on “Least Squares Line”.",
+      body: "The trend line should still be on from Mission 2. If you can't see it, click the ruler button and check “Least Squares Line”.",
       done: "The line shows the overall pattern in all the dots."
     },
     compare: {

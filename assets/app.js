@@ -13,22 +13,32 @@
 
   // Step order. `kind: "choice"` steps are answered by clicking;
   // `kind: "auto"` steps are detected by reading CODAP's state.
+  // Choice steps with an `answer` must be answered correctly to continue.
   const STEPS = [
-    { id: "predict", kind: "choice" },
-    { id: "graph",   kind: "auto" },
-    { id: "xaxis",   kind: "auto" },
-    { id: "yaxis",   kind: "auto" },
-    { id: "line",    kind: "auto" },
-    { id: "compare", kind: "choice", answer: "up" },
-    { id: "map",     kind: "auto", bonus: true }
+    { id: "graph",    mission: 1, kind: "auto" },
+    { id: "sexaxis",  mission: 1, kind: "auto" },
+    { id: "dot",      mission: 1, kind: "choice", answer: "bird" },
+    { id: "showcount", mission: 1, kind: "auto" },
+    { id: "count",    mission: 1, kind: "choice", answer: "male" },
+    { id: "yearaxis", mission: 2, kind: "auto" },
+    { id: "feedaxis", mission: 2, kind: "auto" },
+    { id: "yearline", mission: 2, kind: "auto" },
+    { id: "trend",    mission: 2, kind: "choice", answer: "up" },
+    { id: "predict",  mission: 3, kind: "choice" },
+    { id: "xaxis",    mission: 3, kind: "auto" },
+    { id: "yaxis",    mission: 3, kind: "auto" },
+    { id: "line",     mission: 3, kind: "auto" },
+    { id: "compare",  mission: 3, kind: "choice", answer: "up" },
+    { id: "map",      mission: 3, kind: "auto", bonus: true }
   ];
   const MAIN = STEPS.filter(s => !s.bonus);
 
   const state = {
+    started: false,
     done: new Set(),
-    prediction: null,
-    compareAnswer: null,
-    compareWrong: false,
+    open: new Set(),  // done steps the student expanded to reread
+    answers: {},    // step id -> last choice clicked
+    wrong: {},      // step id -> last choice was wrong
     swapped: false,
     detected: {}
   };
@@ -67,9 +77,12 @@
   const norm = s => (s || "").toString().toLowerCase().replace(/[\s_]+/g, " ").trim();
   const FEED = norm(L.attributes.feeders);
   const BEAK = norm(L.attributes.beak);
+  const SEX = norm(L.attributes.sex);
+  const YEAR = norm(L.attributes.year);
 
   async function readCodap() {
-    const found = { graph: false, xaxis: false, yaxis: false, line: false, map: false, swapped: false };
+    const found = { graph: false, sexaxis: false, showcount: false, yearaxis: false, feedaxis: false,
+      yearline: false, xaxis: false, yaxis: false, line: false, map: false, swapped: false };
     const list = await call({ action: "get", resource: "componentList" });
     if (!list || !list.success) return found;
 
@@ -83,14 +96,23 @@
       const x = norm(g.values.xAttributeName);
       const y = norm(g.values.yAttributeName);
 
+      const ad = await call({ action: "get", resource: `component[${c.id}].adornmentList` });
+      const has = type => !!(ad && ad.success && (ad.values || []).some(a => a.type === type && a.isVisible));
+
+      if (x === SEX || y === SEX) {
+        found.sexaxis = true;
+        if (has("Count")) found.showcount = true;
+      }
+      if (x === YEAR) found.yearaxis = true;
+      if (x === YEAR && y === FEED) {
+        found.feedaxis = true;
+        if (has("LSRL")) found.yearline = true;
+      }
       if (x === BEAK && y === FEED) found.swapped = true;
       if (x === FEED) found.xaxis = true;
       if (x === FEED && y === BEAK) {
         found.yaxis = true;
-        const ad = await call({ action: "get", resource: `component[${c.id}].adornmentList` });
-        if (ad && ad.success && (ad.values || []).some(a => a.type === "LSRL" && a.isVisible)) {
-          found.line = true;
-        }
+        if (has("LSRL")) found.line = true;
       }
     }
     return found;
@@ -136,16 +158,19 @@
     render(changed);
   }
 
+  // A finished auto step in the current mission that CODAP no longer shows
+  // (e.g. an axis got moved). We keep it done but show the instructions again.
+  function isBroken(step) {
+    const cur = currentStep();
+    return inCodap && !PREVIEW && !!cur && !cur.bonus && step.kind === "auto" &&
+      step.mission === cur.mission && state.done.has(step.id) && !state.detected[step.id];
+  }
+
   function choose(stepId, value) {
     const step = STEPS.find(s => s.id === stepId);
-    if (stepId === "predict") {
-      state.prediction = value;
-      state.done.add("predict");
-    } else if (stepId === "compare") {
-      state.compareAnswer = value;
-      state.compareWrong = value !== step.answer;
-      if (!state.compareWrong) state.done.add("compare");
-    }
+    state.answers[stepId] = value;
+    state.wrong[stepId] = step.answer != null && value !== step.answer;
+    if (!state.wrong[stepId]) state.done.add(stepId);
     render(true);
     if (inCodap) scheduleCheck(50);
   }
@@ -205,7 +230,7 @@
     if (step.kind === "choice") {
       const group = el("div", { class: "choices", role: "group", "aria-label": t.title });
       for (const [value, label] of Object.entries(t.choices)) {
-        const picked = step.id === "compare" && state.compareAnswer === value;
+        const picked = step.answer != null && state.answers[step.id] === value;
         group.append(el("button", {
           type: "button",
           class: "choice" + (picked ? " picked" : ""),
@@ -213,7 +238,7 @@
         }, label));
       }
       body.append(group);
-      if (step.id === "compare" && state.compareWrong) {
+      if (state.wrong[step.id]) {
         body.append(el("p", { class: "hint" }, t.wrong));
       }
     }
@@ -230,12 +255,28 @@
   function doneNote(step) {
     const t = L.steps[step.id];
     if (step.id === "compare") {
-      const matched = state.prediction === "pointy";
+      const matched = state.answers.predict === "pointy";
       return el("div", { class: "step-note" },
         el("p", {}, t.correct),
         el("p", {}, matched ? t.matched : t.notMatched));
     }
+    if (step.answer != null) return el("p", { class: "step-note" }, t.correct);
     return el("p", { class: "step-note" }, t.done);
+  }
+
+  function storyScreen(app) {
+    const S = L.story;
+    app.append(el("header", { class: "top" }, el("h1", {}, L.title)),
+      el("section", { class: "story" },
+        el("h2", {}, S.title),
+        el("div", { class: "embed" },
+          el("iframe", { src: "https://macaulaylibrary.org/asset/45345081/embed",
+            title: S.videoTitle, frameborder: "0", allowfullscreen: "" })),
+        ...S.paragraphs.map(p => el("p", {}, p)),
+        inCodap || PREVIEW
+          ? el("button", { type: "button", class: "start-btn",
+              onclick: () => { state.started = true; render(true); } }, S.start)
+          : el("p", { class: "notice" }, L.notInCodap)));
   }
 
   function render(announce) {
@@ -244,6 +285,7 @@
     const mainDone = MAIN.filter(s => state.done.has(s.id)).length;
 
     app.replaceChildren();
+    if (!state.started) return storyScreen(app);
 
     app.append(el("header", { class: "top" },
       el("h1", {}, L.title),
@@ -262,26 +304,46 @@
       el("p", {}, L.progress(mainDone, MAIN.length))));
 
     const list = el("ol", { class: "steps" });
+    let mission = null;
     STEPS.forEach((step, i) => {
       const isDone = state.done.has(step.id);
       const isCurrent = current && current.id === step.id;
       // Hide the bonus until the main activity is finished.
       if (step.bonus && mainDone < MAIN.length) return;
+      // Hide missions that haven't started yet.
+      if (current && step.mission > current.mission) return;
+
+      if (step.mission !== mission) {
+        mission = step.mission;
+        list.append(el("li", { class: "mission" }, el("h2", {}, L.missions[mission])));
+      }
 
       const marker = el("span", { class: "marker" });
       if (isCurrent) marker.append(svg(BIRD));
       else if (isDone) marker.append(svg(`<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5 l3.5 3.5 l7 -8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`));
       else marker.textContent = String(i + 1);
 
+      const broken = isBroken(step);
+      const title = el("h2", {}, step.bonus ? `${L.bonus}: ${L.steps[step.id].title}` : L.steps[step.id].title);
+      let main;
+      if (isDone) {
+        // Finished steps fold away but can be reopened to reread the instructions.
+        const details = el("details", {
+          open: broken || state.open.has(step.id) ? "" : null,
+          ontoggle: e => { if (!broken) e.target.open ? state.open.add(step.id) : state.open.delete(step.id); }
+        },
+          el("summary", {}, title),
+          broken ? el("p", { class: "hint" }, L.broken) : null,
+          el("p", { class: "reread" }, L.steps[step.id].body));
+        main = el("div", { class: "step-main" }, details, doneNote(step));
+      } else {
+        main = el("div", { class: "step-main" }, title, isCurrent ? stepBody(step) : null);
+      }
+
       const li = el("li", {
-        class: "step" + (isDone ? " done" : "") + (isCurrent ? " current" : "") + (step.bonus ? " bonus" : ""),
+        class: "step" + (isDone ? " done" : "") + (isCurrent ? " current" : "") + (step.bonus ? " bonus" : "") + (broken ? " broken" : ""),
         "aria-current": isCurrent ? "step" : null
-      },
-        marker,
-        el("div", { class: "step-main" },
-          el("h2", {}, step.bonus ? `${L.bonus}: ${L.steps[step.id].title}` : L.steps[step.id].title),
-          isCurrent ? stepBody(step) : null,
-          isDone ? doneNote(step) : null));
+      }, marker, main);
       list.append(li);
 
       if (step.id === "compare" && isDone) {
